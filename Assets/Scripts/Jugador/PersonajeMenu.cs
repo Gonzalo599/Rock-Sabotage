@@ -31,8 +31,6 @@ public class PersonajeMenu : MonoBehaviourPun
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
         Vector3 direccion = new Vector3(horizontal, 0f, vertical).normalized;
-
-        // --- MAGIA DE LA ANIMACIÓN ---
         bool seMueve = direccion.magnitude >= 0.1f;
         if (anim != null)
         {

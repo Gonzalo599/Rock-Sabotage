@@ -16,8 +16,6 @@ public class ControladorJugador : MonoBehaviourPun
     
     private Rigidbody rb;
     private Vector3 entradaMovimiento;
-    
-    // Variables para controlar el objeto agarrado
     private GameObject objetoAgarrado;
     private Rigidbody rbObjeto;
     private Transform puntoAgarre;
