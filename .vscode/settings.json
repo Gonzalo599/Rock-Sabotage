@@ -60,13 +60,13 @@
         "*.asset": "yaml",
         "*.meta": "yaml",
         "*.prefab": "yaml",
-        "*.unity": "yaml",
+        "*.unity": "yaml"
     },
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Rock Sabotage.slnx",
+    "dotnet.defaultSolution": "Rock-Sabotage-2026-06-21_13-29-06.slnx",
     "dotnet.enableWorkspaceBasedDevelopment": false
 }
