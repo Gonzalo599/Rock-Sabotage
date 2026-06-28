@@ -20,6 +20,9 @@ public class PersonajeMenu : MonoBehaviourPunCallbacks
     public float radioAtaque = 2f; 
     public float fuerzaEmpuje = 15f; 
     public Transform puntoAtaque;
+    
+    public float tiempoPausaAtaque = 1f; 
+    private bool estaAtacando = false;
 
     private CharacterController controller;
     private Animator anim;
@@ -65,35 +68,45 @@ public class PersonajeMenu : MonoBehaviourPunCallbacks
         {
             velocidadVertical.y = -2f; 
         }
-
-        // --- ENTRADA DE MOVIMIENTO ---
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
-        Vector3 direccion = new Vector3(horizontal, 0f, vertical).normalized;
-        bool seMueve = direccion.magnitude >= 0.1f;
-        
-        if (anim != null) anim.SetBool("Correr", seMueve);
-
-        if (seMueve)
+        if (!estaAtacando)
         {
-            float anguloObjetivo = Mathf.Atan2(direccion.x, direccion.z) * Mathf.Rad2Deg;
-            float anguloSuave = Mathf.LerpAngle(transform.eulerAngles.y, anguloObjetivo, velocidadGiro * Time.deltaTime);
-            transform.rotation = Quaternion.Euler(0f, anguloSuave, 0f);
+            float horizontal = Input.GetAxisRaw("Horizontal");
+            float vertical = Input.GetAxisRaw("Vertical");
+            Vector3 direccion = new Vector3(horizontal, 0f, vertical).normalized;
+            bool seMueve = direccion.magnitude >= 0.1f;
+            
+            if (anim != null) anim.SetBool("Correr", seMueve);
 
-            controller.Move(direccion * velocidad * Time.deltaTime);
+            if (seMueve)
+            {
+                float anguloObjetivo = Mathf.Atan2(direccion.x, direccion.z) * Mathf.Rad2Deg;
+                float anguloSuave = Mathf.LerpAngle(transform.eulerAngles.y, anguloObjetivo, velocidadGiro * Time.deltaTime);
+                transform.rotation = Quaternion.Euler(0f, anguloSuave, 0f);
+
+                controller.Move(direccion * velocidad * Time.deltaTime);
+            }
+        }
+        else 
+        {
+            // Si estamos atacando, nos aseguramos de apagar la animación de correr
+            if (anim != null) anim.SetBool("Correr", false);
         }
 
+        // La gravedad sigue funcionando siempre, para que no te quedes flotando si atacás en el aire
         velocidadVertical.y -= gravedad * Time.deltaTime;
         controller.Move(velocidadVertical * Time.deltaTime);
         
-        if (Input.GetMouseButtonDown(0))
+        // --- ENTRADA DE ATAQUE ---
+        // Evitamos que el jugador haga "spam" de clics mientras ya está pegando
+        if (Input.GetMouseButtonDown(0) && !estaAtacando && !string.IsNullOrEmpty(instrumentoActual))
         {
-            AtacarEnLobby();
+            StartCoroutine(RutinaAtaqueEnLobby());
         }
     }
 
-    void AtacarEnLobby()
+    System.Collections.IEnumerator RutinaAtaqueEnLobby()
     {
+        estaAtacando = true;
         if (anim != null) anim.SetTrigger("Atacar");
         Vector3 posicionAtaque = puntoAtaque != null ? puntoAtaque.position : transform.position + transform.forward;
         Collider[] enemigosGolpeados = Physics.OverlapSphere(posicionAtaque, radioAtaque);
@@ -111,6 +124,12 @@ public class PersonajeMenu : MonoBehaviourPunCallbacks
                 }
             }
         }
+
+        // 4. ¡LA PAUSA! Esperamos el tiempo indicado antes de devolver el control
+        yield return new WaitForSeconds(tiempoPausaAtaque);
+
+        // 5. Liberamos el movimiento
+        estaAtacando = false;
     }
 
     [PunRPC]
@@ -150,29 +169,34 @@ public class PersonajeMenu : MonoBehaviourPunCallbacks
 
         instrumentoActual = claseElegida;
         
-        // Apagamos TODOS los objetos (incluyendo los dos palillos)
         if (visualGuitarra != null) visualGuitarra.SetActive(false);
         if (visualBajo != null) visualBajo.SetActive(false);
         if (visualMicrofono != null) visualMicrofono.SetActive(false);
         if (visualBateriaDerecha != null) visualBateriaDerecha.SetActive(false);
         if (visualBateriaIzquierda != null) visualBateriaIzquierda.SetActive(false);
         
-        // Encendemos según la clase
+        // ¡LA MAGIA NUEVA ESTÁ ACÁ ADENTRO!
         switch (instrumentoActual)
         {
             case "Guitarrista": 
                 if (visualGuitarra != null) visualGuitarra.SetActive(true); 
+                if (anim != null) anim.SetInteger("IDInstrumento", 1); // Avisamos al Animator
                 break;
             case "Bajista": 
                 if (visualBajo != null) visualBajo.SetActive(true); 
+                if (anim != null) anim.SetInteger("IDInstrumento", 2);
+                break;
+            case "Baterista": 
+                if (visualBateriaDerecha != null) visualBateriaDerecha.SetActive(true); 
+                if (visualBateriaIzquierda != null) visualBateriaIzquierda.SetActive(true);
+                if (anim != null) anim.SetInteger("IDInstrumento", 3);
                 break;
             case "Cantante": 
                 if (visualMicrofono != null) visualMicrofono.SetActive(true); 
+                if (anim != null) anim.SetInteger("IDInstrumento", 4);
                 break;
-            case "Baterista": 
-                // Acá encendemos los dos palillos al mismo tiempo
-                if (visualBateriaDerecha != null) visualBateriaDerecha.SetActive(true); 
-                if (visualBateriaIzquierda != null) visualBateriaIzquierda.SetActive(true); 
+            default:
+                if (anim != null) anim.SetInteger("IDInstrumento", 0); // Desarmado
                 break;
         }
     }
