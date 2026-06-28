@@ -43,6 +43,7 @@ MonoBehaviour:
   - RevivirRPC
   - SecuenciaMuerteRPC
   - RPC_SolicitarDestruccion
+  - RPC_RecibirGolpe
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 0
